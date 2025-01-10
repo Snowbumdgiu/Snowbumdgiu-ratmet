@@ -20,8 +20,6 @@ sheet1_df['Symbol'] = sheet1_df['Code'].str.split('(').str[0]
 # Map the sectors from sheet2 to the symbols in sheet1
 merged_df = pd.merge(sheet1_df, sheet2_df[['Symbol', 'Sector']], on='Symbol', how='left')
 merged_df= merged_df.drop(columns=['Symbol'])
-merged_df.head(10)
-
 
 
 # Chuyển từ wide format sang long format
@@ -37,14 +35,12 @@ df_melted['Company'] = df_melted['Name'].factorize()[0]
 # Sắp xếp dữ liệu theo thứ tự công ty
 df_sorted = df_melted.sort_values(by=['Company', 'Year'])
 df_sorted=df_melted.drop(columns=['Company'])
-df_sorted
 
 import numpy as np
 
 df_sorted['Sector'] = df_sorted['Sector'].replace(['-', 'Unclassified'], [np.nan, 'Other'])
 # Các dữ liệu null ở cột sector sẽ được phân loại thành other
 df_sorted['Sector'] = df_sorted['Sector'].fillna('Other')
-df_sorted
 
 
 df_sorted.to_csv("df_sorted.csv", index=False)
@@ -77,8 +73,8 @@ if not market_value_data.empty:
     min_year, max_year = market_value_data["Year"].min(), market_value_data["Year"].max()
     print(f"Data available from {min_year} to {max_year}.")
 
-    start_year = int(input(f"Enter start year (between {min_year} and {max_year}): "))
-    end_year = int(input(f"Enter end year (between {start_year} and {max_year}): "))
+    start_year = st.number_input("Nhập năm bắt đầu:", min_value=min_year, max_value=max_year, value=min_year)
+    end_year = st.number_input("Nhập năm kết thúc:", min_value=start_year, max_value=max_year, value=max_year)
 
     if start_year >= min_year and end_year <= max_year and start_year <= end_year:
         # Lọc dữ liệu theo khoảng năm
@@ -272,7 +268,7 @@ def plot_combined_chart(file_path, company_name):
 
 # Sử dụng hàm
 file_path = '/mnt/data/df_sorted.csv'  # Đường dẫn đến tệp CSV
-company_name = input("Nhập tên công ty cần vẽ biểu đồ: ")
+company_name = st.text_input("Nhập tên công ty cần vẽ biểu đồ:")
 plot_combined_chart(file_path, company_name)
 
 import pandas as pd
@@ -322,36 +318,6 @@ def plot_roe_chart(file_path, country1, country2):
 
 # Sử dụng hàm
 file_path = '/mnt/data/df_sorted.csv'  # Đường dẫn đến tệp CSV
-country1 = input("Nhập tên công ty đầu tiên: ")
-country2 = input("Nhập tên công ty thứ hai: ")
+country1 = st.text_input("Nhập tên quốc gia thứ nhất:")
+country2 = st.text_input("Nhập tên quốc gia thứ hai:")
 plot_roe_chart(file_path, country1, country2)
-
-
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-# Đọc dữ liệu từ Google Sheets dưới dạng CSV
-url = 'https://docs.google.com/spreadsheets/d/1TGIQ0CJfs3pyz7aztJDWU1KpiNw5IhuL/export?format=csv'
-df = pd.read_csv(url)
-
-# Chuyển đổi dữ liệu sang dạng dài (long format)
-df = pd.melt(df, id_vars=['Name', 'Sector', 'Sector_Encoded'],
-                var_name='Date', value_name='Value')
-
-# Chuyển cột 'Date' thành kiểu datetime
-df['Date'] = pd.to_datetime(df['Date'])
-
-# Giữ nguyên thứ tự công ty gốc, tạo cột chỉ số thứ tự dựa trên thứ tự ban đầu của 'Name'
-df['Company_Order'] = df['Name'].factorize()[0]
-
-# Sắp xếp dữ liệu theo thứ tự công ty
-df_sorted = df.sort_values(by=['Company_Order', 'Date'])
-
-# Đổi thứ tự cột: Đặt 'Date' trước 'Sector', và để 2 cột 'Sector' ở cuối
-df = df_sorted[['Name', 'Date', 'Value', 'Sector', 'Sector_Encoded']]
-
-# Hiển thị dữ liệu sau khi thay đổi thứ tự cột
-df.head(30)
-
-df.to_csv("df.csv", index=False)
